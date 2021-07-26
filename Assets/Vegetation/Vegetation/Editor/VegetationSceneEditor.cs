@@ -87,7 +87,7 @@ namespace Vegetation.Rendering
 
             EditorGUILayout.LabelField("Path: " + path);
 
-            if (GUILayout.Button("Save Libraries"))
+            if (GUILayout.Button("Initialize Libraries"))
             {
                 SaveAssets();
             }
