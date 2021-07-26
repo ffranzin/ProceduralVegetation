@@ -8,7 +8,7 @@ namespace Vegetation.Rendering
     [CustomEditor(typeof(GroundVegetation))]
     internal class GroundVegetationEditor : VegetationEditor
     {
-        GroundVegetation script;
+        private GroundVegetation script;
 
         public void OnEnable()
         {

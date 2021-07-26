@@ -41,7 +41,7 @@ namespace Vegetation
             int instanceCountY = Mathf.CeilToInt(vegetationArea.AreaSize.y / placementDistance);
 
             int totalInstanceNeeded = instanceCountX * instanceCountY;
-            
+
             if (totalInstanceNeeded > outputBuffer.count)
             {
                 outputBuffer.Release();
@@ -125,9 +125,9 @@ namespace Vegetation
         public static int GetPlantsPositionsCounter(VegetationArea vegetationArea)
         {
             float placementDistance = VegetationSettings.GetVegetationPlacementDistance(vegetationArea.VegetationCover);
-            
+
             InitializeOutputBufferOnGPU(vegetationArea, placementDistance);
-            
+
             ExtractPlantsPositionsFromGPU(vegetationArea, placementDistance);
 
             int counter = GetOutputBufferCounter();

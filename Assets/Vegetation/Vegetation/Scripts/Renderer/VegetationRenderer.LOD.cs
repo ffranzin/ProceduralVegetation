@@ -49,7 +49,6 @@ namespace Vegetation.Rendering
         private static ComputeBuffer GlobalArgBuffersOnGPU;
         private static ComputeBuffer GlobalShadowArgBuffersOnGPU;
 
-        private static PerformanceAnalysis LODtimer;
         private static int LODRequestCounter = 0;
 
         #region INITIALIZATION
@@ -67,8 +66,6 @@ namespace Vegetation.Rendering
             LinearizeArgsBuffer();
 
             InitializeLODComputeBuffers();
-
-            LODtimer = new PerformanceAnalysis("Vegetation_Rendering - LOD Proc.txt");
         }
 
 
@@ -104,7 +101,7 @@ namespace Vegetation.Rendering
                     shadowInstancesCountPerPlant.Add(new int[VegetationConstants.MAX_LOD_LEVELS]);
                 }
             }
-            
+
             ///A) Cada planta possui uma cobertura vegetal que tem uma distancia maxima de vizualização. 
             ///B) Alem disso, cada planta é posta em uma área fixa, em função da cobertura vegetal que ela foi atribuida.
             ///A partir de (A) e (B) é possivel estimar aproximadamente um valor maximo de instancias de cada planta, 
@@ -184,7 +181,7 @@ namespace Vegetation.Rendering
             #endregion
         }
 
-        
+
         private static void LinearizeArgsBuffer()
         {
             List<CustomArgBuffer> allArgBuffers = new List<CustomArgBuffer>();
@@ -235,7 +232,7 @@ namespace Vegetation.Rendering
         }
         #endregion
 
-        
+
         private static void ProceduralDistributionPlantsLOD()
         {
             computeLOD.SetTexture(ComputeLODKernel, "_PlantsPositionsBuffer", vegetationAtlas.texture);
@@ -289,18 +286,18 @@ namespace Vegetation.Rendering
             {
                 return;
             }
-            
+
             if (!LODEncapsulatedRequestData.ContainsKey(area.VegetationmapPage.size))
             {
                 LODEncapsulatedRequestData.Add(area.VegetationmapPage.size, new List<EncapsulatedRequestDataLOD>());
             }
 
-            LODEncapsulatedRequestData[area.VegetationmapPage.size].Add(new EncapsulatedRequestDataLOD((int)area.VegetationCover, VegetationSettings.GetVegetationPlacementDistance(area.VegetationCover), area.AdjustedBoundsMinMax, 
+            LODEncapsulatedRequestData[area.VegetationmapPage.size].Add(new EncapsulatedRequestDataLOD((int)area.VegetationCover, VegetationSettings.GetVegetationPlacementDistance(area.VegetationCover), area.AdjustedBoundsMinMax,
                                 area.VegetationmapPage.pageDescriptorToGPU, area.HeightmapPage.pageDescriptorToGPU));
 
             LODRequestCounter++;
         }
-        
+
 
         #region INSTANCE COUNTER SET/RESET
         private static void SetInstancesCounterOnGlobalArgsBuffer()
@@ -336,9 +333,9 @@ namespace Vegetation.Rendering
             ReSetInstancesCounterOnGlobalArgsBuffer();
             Profiler.EndSample();
 
-            LODtimer.Begin();
+            Profiler.BeginSample("Vegetation_Rendering - Compute LOD");
             ProceduralDistributionPlantsLOD();
-            LODtimer.End();
+            Profiler.EndSample();
 
             Profiler.BeginSample("Vegetation_Rendering - Set LOD Instance Counter");
             SetInstancesCounterOnGlobalArgsBuffer();
@@ -372,8 +369,6 @@ namespace Vegetation.Rendering
             ShadowLODBufferDataOnGPU = null;
             GlobalArgBuffersOnGPU = null;
             GlobalShadowArgBuffersOnGPU = null;
-
-            LODtimer?.SaveAnalysis();
         }
     }
 }

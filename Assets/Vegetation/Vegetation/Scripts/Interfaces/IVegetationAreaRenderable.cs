@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-
-namespace Vegetation.Rendering
+﻿namespace Vegetation.Rendering
 {
     public interface IVegetationAreaRenderable
     {

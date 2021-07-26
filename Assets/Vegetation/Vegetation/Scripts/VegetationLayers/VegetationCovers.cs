@@ -13,7 +13,7 @@
         GROUND_VEGETATION = 4,
         DENSE_GROUND_VEGETATION = 5
     };
-    
+
     /// <summary>
     /// Categorias das plantas que podem ser distribuidas na GPU para
     /// serem recuperadas e mantidas na RAM.

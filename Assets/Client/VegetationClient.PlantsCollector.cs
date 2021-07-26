@@ -4,20 +4,19 @@ namespace Vegetation.Tests
 {
     internal partial class VegetationClient
     {
-        IVegetationAreaCollectable vegetation;
+        private IVegetationAreaCollectable vegetation;
 
         [Header("Plants Collector")]
         [SerializeField] private bool collectPlants = false;
         [SerializeField] private bool ShowCollectedPlants = false;
         [SerializeField] private Vector3 size = new Vector3(100, 1, 100);
         [SerializeField] private CollectableVegetationCover CollectableVegetationCover = CollectableVegetationCover.MEDIUM_TREE;
+        private Bounds bounds = new Bounds();
 
-        Bounds bounds = new Bounds();
-       
 
         private void CollectPlantsAroundCamera()
         {
-            if(!collectPlants)
+            if (!collectPlants)
             {
                 ShowCollectedPlants = false;
             }

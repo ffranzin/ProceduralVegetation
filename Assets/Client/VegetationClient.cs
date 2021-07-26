@@ -5,9 +5,9 @@ namespace Vegetation.Tests
 
     internal partial class VegetationClient : MonoBehaviour
     {
-        void Awake()
+        private void Awake()
         {
-            VegetationFacade.Initialize("asd");
+            VegetationFacade.Initialize();
             InitializeGrid();
         }
 
@@ -16,12 +16,12 @@ namespace Vegetation.Tests
             CollectOldCells();
         }
 
-        void Update()
+        private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 DestroyAllCells();
-                VegetationFacade.Initialize("asd");
+                VegetationFacade.Initialize();
             }
 
             InstanciateCellAroundPos();

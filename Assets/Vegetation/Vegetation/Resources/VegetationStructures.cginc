@@ -28,12 +28,4 @@ struct LODBufferDescriptor
 	int instancesCounter;
 };
 
-
-struct ObstaclePlantDescriptor
-{
-     float3 position;
-     float worldRadius;
-	 int layerIndex;
-};
-
 #endif

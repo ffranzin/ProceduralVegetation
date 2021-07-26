@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using UnityEngine.Profiling;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using Vegetation.Rendering;
 
 namespace Vegetation.Tests
@@ -9,7 +8,7 @@ namespace Vegetation.Tests
     {
         public int lastAccess { get; private set; }
 
-        private IVegetationAreaRenderable vegetationArea;
+        private readonly IVegetationAreaRenderable vegetationArea;
 
         public Bounds boundsWorld { get; private set; }
 
@@ -35,9 +34,9 @@ namespace Vegetation.Tests
 
     internal partial class VegetationClient
     {
-        const int OLD_CELL_INTERVAL = 100;
-        const int COLLECT_OLD_CELL_INTERVAL = 100;
-        const float TERRAIN_SIZE = 5000;
+        private const int OLD_CELL_INTERVAL = 100;
+        private const int COLLECT_OLD_CELL_INTERVAL = 100;
+        private const float TERRAIN_SIZE = 5000;
 
         [Header("Plants Grid Spawner")]
 
@@ -55,7 +54,7 @@ namespace Vegetation.Tests
 
         private VetetationCell[,] hash;
 
-        private List<Vector2Int> instancedCells = new List<Vector2Int>();
+        private readonly List<Vector2Int> instancedCells = new List<Vector2Int>();
 
         private int cellsHCounter;
         private int cellsVCounter;

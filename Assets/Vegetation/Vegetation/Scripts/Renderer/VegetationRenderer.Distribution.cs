@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
-using Utils.Analysis;
 using Utils.Atlas;
 using Utils.Extensions;
 
@@ -39,8 +38,8 @@ namespace Vegetation.Rendering
             {
                 this.vegetationType = vegetationType;
                 this.placementDistance = placementDistance;
-                this.adjustedBound = boundArea;
-                this.originalBound = boundAreaOriginal;
+                adjustedBound = boundArea;
+                originalBound = boundAreaOriginal;
                 this.positionAtlasPage = positionAtlasPage;
             }
         }

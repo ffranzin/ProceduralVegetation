@@ -6,9 +6,9 @@ namespace Vegetation.Rendering
     internal static partial class VegetationRenderer
     {
         private static AdvancedAtlasMultiResolution vegetationAtlas;
-        
+
         private static ComputeShader computeVegetation;
-        
+
         public static void Initialize()
         {
             vegetationAtlas = new AdvancedAtlasMultiResolution(RenderTextureFormat.RGFloat, FilterMode.Point, RenderTextureReadWrite.Linear, "VegetationPositionBuffer");
@@ -18,13 +18,9 @@ namespace Vegetation.Rendering
             InitializeDistribution();
             InitializeLOD();
             InitializeRenderer();
-
-            //Camera.onPreRender += ComputeDistribution;
-            //Camera.onPreRender += ComputeLOD;
-            //Camera.onPreRender += Render;
         }
 
-        
+
         public static AtlasPageDescriptor InitializeVegetationPage(VegetationAreaRenderer vegetationArea)
         {
             float placementDistance = VegetationSettings.GetVegetationPlacementDistance(vegetationArea.VegetationCover);
@@ -55,10 +51,6 @@ namespace Vegetation.Rendering
             ReleaseLOD();
             ReleaseRenderer();
             ReleaseDistribution();
-
-            Camera.onPreRender -= ComputeDistribution;
-            Camera.onPreRender -= ComputeLOD;
-           // Camera.onPreRender -= Render;
         }
     }
 }

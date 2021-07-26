@@ -5,7 +5,7 @@ namespace Vegetation
 {
     public static class VegetationFacade
     {
-        public static void Initialize(string bundlePath)
+        public static void Initialize()
         {
             DefaultVegetationInputData.Initialize();
 

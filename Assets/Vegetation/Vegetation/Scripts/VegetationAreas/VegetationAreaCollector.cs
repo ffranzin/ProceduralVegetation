@@ -23,7 +23,7 @@ namespace Vegetation
             {
                 if (m_Count == -1)
                 {
-                    if(m_Positions != null)
+                    if (m_Positions != null)
                     {
                         m_Count = m_Positions.Length;
                     }

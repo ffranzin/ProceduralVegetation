@@ -46,8 +46,8 @@ namespace Vegetation
 
         public LayerDescriptor layerDescriptor;
 
-        [SerializeField]protected List<PlantDescriptor> m_Plants = new List<PlantDescriptor>();
-        [SerializeField]protected List<int> m_PlantsPlacementProbability = new List<int>();
+        [SerializeField] protected List<PlantDescriptor> m_Plants = new List<PlantDescriptor>();
+        [SerializeField] protected List<int> m_PlantsPlacementProbability = new List<int>();
 
         public ReadOnlyCollection<PlantDescriptor> PlantsRenderer => m_Plants.AsReadOnly();
 
@@ -58,12 +58,6 @@ namespace Vegetation
 
             DiscretizeModelsIndex();
         }
-        
-
-        //public bool HasPlantReference(PlantDescriptor plant)
-        //{
-        //    return m_Plants.IndexOf(plant) >= 0;
-        //}
 
 
         private void DiscretizeModelsIndex()
@@ -90,14 +84,14 @@ namespace Vegetation
 
             for (int i = 0; i < m_PlantsPlacementProbability.Count; i++)
             {
-                m_PlantsPlacementProbability[i] = Mathf.RoundToInt((float)m_PlantsPlacementProbability[i] / sum * 100f);
+                m_PlantsPlacementProbability[i] = Mathf.RoundToInt(m_PlantsPlacementProbability[i] / sum * 100f);
             }
         }
 
 
         private void OnValidate()
         {
-            if(Application.isPlaying)
+            if (Application.isPlaying)
             {
                 InitializeVegetationLayer();
             }

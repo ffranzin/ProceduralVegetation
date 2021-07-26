@@ -59,22 +59,4 @@ inline bool IsInvalidPosition(float2 pos)
 	return pos.x == INFINITY || pos.y == INFINITY;
 }
 
-
-inline float EncodeEnvironmentElementData(int environmentElementClass, float normalizedScale)
-{
-	normalizedScale = clamp(normalizedScale, 0, 0.999);
-
-	return environmentElementClass + normalizedScale;
-}
-
-inline float DecodeEnvironmentElementScale(float encodedData)
-{
-	return frac(encodedData);
-}
-
-inline float Decode_EnvironmentElementIndex(float encodedData)
-{
-	return (int)(encodedData);
-}
-
 #endif

@@ -20,7 +20,7 @@ namespace Vegetation
 
         public Vector4 BoundsMinMax { get; private set; } = Vector4.zero;
 
-        
+
         /// <summary>
         /// Cobertura vegetal que compoe está area. 
         /// </summary>

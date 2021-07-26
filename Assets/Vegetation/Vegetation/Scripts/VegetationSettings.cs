@@ -6,8 +6,8 @@ namespace Vegetation
     /// </summary>
     internal static class VegetationSettings
     {
-        private static float[] vegetationCoverDistance = new float[6] { 3000, 1000, 500, 250, 120, 50};
-        private static float[] vegetationCoverDensity = new float[6] { 8, 4, 2, 1, 0.5f, 0.25f};
+        private static readonly float[] vegetationCoverDistance = new float[6] { 3000, 1000, 500, 250, 120, 50 };
+        private static readonly float[] vegetationCoverDensity = new float[6] { 8, 4, 2, 1, 0.5f, 0.25f };
 
         /// <summary>
         /// Retorna a distacia de visualização das plantas de uma determinada cobertura vegetal.
@@ -46,7 +46,7 @@ namespace Vegetation
                 if (vegetationCoverDistance[i] > distance)
                 {
                     vegetationCover = (VegetationCover)i;
-                    
+
                     break;
                 }
             }

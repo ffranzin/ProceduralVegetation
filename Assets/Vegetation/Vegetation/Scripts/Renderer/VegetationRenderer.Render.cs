@@ -1,18 +1,16 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 using System.Runtime.InteropServices;
+using UnityEngine;
 using UnityEngine.Profiling;
-using Utils.Analysis;
-using System.Linq;
 
 namespace Vegetation.Rendering
 {
     internal static partial class VegetationRenderer
     {
-        private static int modelIndexPropertyID = Shader.PropertyToID("_InstanceModelIndex");
-        private static int LODLevelPropertyID = Shader.PropertyToID("_InstanceLODLevel");
-        private static int LODBufferDescriptorPropertyID = Shader.PropertyToID("_LODBufferDescriptor");
-        private static int elementsPositionsBufferLODPropertyID = Shader.PropertyToID("_PlantsPositionsBufferLODGeometry");
+        private static readonly int modelIndexPropertyID = Shader.PropertyToID("_InstanceModelIndex");
+        private static readonly int LODLevelPropertyID = Shader.PropertyToID("_InstanceLODLevel");
+        private static readonly int LODBufferDescriptorPropertyID = Shader.PropertyToID("_LODBufferDescriptor");
+        private static readonly int elementsPositionsBufferLODPropertyID = Shader.PropertyToID("_PlantsPositionsBufferLODGeometry");
 
         private static List<RendererComponents> renderersComponents;
 
@@ -23,7 +21,7 @@ namespace Vegetation.Rendering
         private static void InitializeRenderer()
         {
             LinearizeRenderersComponents();
-            
+
             renderBounds = new Bounds(Vector3.zero, Vector3.one * VegetationSettings.GetVegetationViewDistance(VegetationCover.BIG_TREE));
         }
 
@@ -36,7 +34,7 @@ namespace Vegetation.Rendering
             for (int i = 0; i < LibrariesManager.PlantsLibrary.Count; i++)
             {
                 LOD[] lods = LibrariesManager.PlantsLibrary.Get(i).LODGroup.GetLODs();
-                
+
                 for (int j = 0; j < lods.Length; j++)
                 {
                     Renderer[] renderers = lods[j].renderers;
@@ -44,18 +42,19 @@ namespace Vegetation.Rendering
                     {
                         Mesh mesh = renderers[k].GetComponent<MeshFilter>().sharedMesh;
                         Material[] materials = renderers[k].sharedMaterials;
-                        
+
                         for (int l = 0; l < mesh.subMeshCount; l++)
                         {
-                            RendererComponents rc = new RendererComponents();
-                            
-                            rc.PlantModelIndex = i;
-                            rc.LODLevel = j;
-                            rc.Mesh = mesh;
-                            rc.Renderer = renderers[k];
-                            rc.SubmeshIndex = l;
-                            rc.Material = materials[l];
-                            rc.DebugMaterial = new Material(materials[l]);
+                            RendererComponents rc = new RendererComponents
+                            {
+                                PlantModelIndex = i,
+                                LODLevel = j,
+                                Mesh = mesh,
+                                Renderer = renderers[k],
+                                SubmeshIndex = l,
+                                Material = materials[l],
+                                DebugMaterial = new Material(materials[l])
+                            };
                             rc.DebugMaterial.SetColor("_Color", new Color(j == 0 ? 0 : 1, j == 1 ? 0 : 1, j == 1 ? 0 : 1, 1));
                             rc.GeometryMPB = new MaterialPropertyBlock();
                             rc.ShadowMPB = new MaterialPropertyBlock();
@@ -75,7 +74,7 @@ namespace Vegetation.Rendering
             ComputeLOD(Camera.main);
 
             renderBounds.center = camera.transform.position;
-            
+
 #if UNITY_EDITOR
             Profiler.BeginSample("Vegetation_Rendering - GetCounter Debug");
             GetPlantsInstanceCounter();

@@ -27,7 +27,7 @@ namespace Vegetation
                 }
             }
         }
-        
+
         public void ExtractBillboardLibrary()
         {
             billboardsLibrary?.Clear();
@@ -63,7 +63,7 @@ namespace Vegetation
                 }
             }
         }
-        
+
         public void ExtractPlantsLibrary()
         {
             plantsLibrary?.Clear();

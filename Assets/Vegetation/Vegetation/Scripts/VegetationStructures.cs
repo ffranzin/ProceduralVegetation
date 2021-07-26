@@ -1,7 +1,7 @@
 ﻿
-using UnityEngine;
-using System.Runtime.InteropServices;
 using System;
+using System.Runtime.InteropServices;
+using UnityEngine;
 
 namespace Vegetation
 {
@@ -27,7 +27,7 @@ namespace Vegetation.Rendering
 {
     internal class RendererComponents
     {
-        private PlantDescriptor PlantDescriptor;
+        private readonly PlantDescriptor PlantDescriptor;
         public RendererComponents()
         {
             PlantDescriptor = LibrariesManager.PlantsLibrary.Get(0);
@@ -90,7 +90,7 @@ namespace Vegetation.Rendering
 
         public static bool operator ==(TexturePBRMaps c1, TexturePBRMaps c2)
         {
-            return  c1.Albedo == c2.Albedo &&
+            return c1.Albedo == c2.Albedo &&
                     c1.Normal == c2.Normal &&
                     c1.Specular == c2.Specular &&
                     c1.Specular == c2.Specular &&
@@ -105,7 +105,7 @@ namespace Vegetation.Rendering
         public override bool Equals(object texturePBRMaps)
         {
             if (!(texturePBRMaps is TexturePBRMaps))
-            { 
+            {
                 return false;
             }
 
