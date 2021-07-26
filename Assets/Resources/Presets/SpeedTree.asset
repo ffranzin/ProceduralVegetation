@@ -18,7 +18,7 @@ MonoBehaviour:
     selfDistance: 0.111
     worldObstacleRadius: 0
     octaves: 3
-    frequency: 0.001
+    frequency: 0.1
     amplitude: 2
     gain: 0.5
     lacunarity: 1
