@@ -1,0 +1,203 @@
+﻿#pragma kernel VegetationComputeLOD
+#pragma kernel ResetInstancesCounterOnGlobalArgsBuffer
+#pragma kernel SetInstancesCounterOnGlobalArgsBuffer
+
+#include "VegetationCommonVariables.cginc"
+#include "VegetationCommonFunctions.cginc"
+#include "Assets/Vegetation/HLSLUtilities/NoiseUtils.cginc"
+#include "Assets/Vegetation/Vegetation/Scripts/Libraries/Shaders/LayersLibrary.cginc"
+#include "Assets/Vegetation/Vegetation/Scripts/Libraries/Shaders/PlantsLibrary.cginc"
+#include "Assets/Vegetation/Vegetation/Resources/ComputeVegetationDistribution.compute"
+#include "UnityCG.cginc"
+
+struct EncapsulatedRequestDataLOD
+{
+	int vegetationType;
+	float placementDistance;
+	float4 boundArea;
+	float4 positionAtlasPage;
+	float4 heightmapAtlasPage;
+};
+StructuredBuffer<EncapsulatedRequestDataLOD> _EncapsulatedRequestDataLOD;
+
+
+/// Amostra a altura da planta no Mapa de Altura. 
+float SampleHeight(float3 position, float4 boundMinMax, float4 _HeightmapAtlasPage)
+{
+	float2 boundSize = abs(boundMinMax.zw - boundMinMax.xy);
+	float2 uv = saturate((position.xz - boundMinMax.xy) / boundSize);
+	
+	return _HeightmapAtlas[round(_HeightmapAtlasPage.xy + float2(1, 1) + uv * (_HeightmapAtlasPage.z - 3))].x;
+}
+
+/// Um Layer é composto por diversas plantas que apresentam comportamentos semelhantes (descritos atraves do Layer)
+/// de distribuição. Como apenas o Layer é levado em conta durante a distribuição, uma planta deve ser selecionada 
+/// randomicamente atraves deste processo. Alem disso, cada planta tem uma probabilidade de existir com base nas 
+/// configurações de cada Layer. O indice das plantas que compoe este Layer sao postos em um buffer levando em conta 
+/// a probabilidade de cada planta. Por exemplo, considerando as plantas A=20% e B=80% de chances de existencia, o buffer 
+/// seria preenchido da seguinte maneira: [A, A, B, B, B, B, B, B, B, B]. Assim, com um acesso o(1) é possivel garantir 
+/// que as plantas sejam posicionadas com as suas devidas densidades.
+inline int PlantModelIndex(float2 seed, int layerIndex)
+{
+	int index = CustomRandInt(seed, 0, BUFFER_SIZE_RAM_VRAM);
+
+	return _VegetationLayersLibrary[layerIndex].discretizedPlantsIndex[index];
+}
+
+
+/// Verifica que a planta está dentro do campo de visao da camera.
+/// Nesse processo somente a posição da planta é analisada por motivos de performance. No entanto,
+/// a posição da planta pode estar fora do campo de visao, mas sua geometria e/ou projeção de sombra
+/// estar visivel. Por esse motivo, um offset estatico e empiricamente estabelecido deve ser considerado.
+/// Alem disso, o Far Plane é desconsiderado uma vez que as plantas sao renderizadas somente no entorno da camera.  
+inline bool IsInsideFrustum(float3 pos, int plantIndex)
+{
+	float offset = _PlantsLibrary[plantIndex].frustumCullingDistance;
+
+	return	dot(_FrustumPlanesNormal[0].xyz, normalize((pos + _FrustumPlanesNormal[0].xyz * offset) - _WorldSpaceCameraPos)) > 0 && //Left
+			dot(_FrustumPlanesNormal[1].xyz, normalize((pos + _FrustumPlanesNormal[1].xyz * offset) - _WorldSpaceCameraPos)) > 0 && //Right
+			dot(_FrustumPlanesNormal[3].xyz, normalize((pos + _FrustumPlanesNormal[3].xyz * offset) - _WorldSpaceCameraPos)) > 0 && //Up
+			dot(_FrustumPlanesNormal[4].xyz, normalize((pos + _FrustumPlanesNormal[4].xyz * offset) - _WorldSpaceCameraPos)) > 0;	//Near
+}
+
+
+/// Retorna o nivel de LOD que a sombra da planta deve ser projetada, 
+/// conforme a distancia da mesma para a camera.
+inline int PlantShadowLodLevel(int plantIndex, float distance)
+{
+	int shadowLodIndex = (int)((distance / _PlantsLibrary[plantIndex].shadowCullDistance) * BUFFER_SIZE_RAM_VRAM);
+	
+	shadowLodIndex   = min(shadowLodIndex  , BUFFER_SIZE_RAM_VRAM - 1);
+
+	return _PlantsLibrary[plantIndex].discreteLODShadow[shadowLodIndex ];
+}
+
+
+/// Retorna o nivel do LOD que a geometria da planta deve ser renderizada 
+/// conforme a distancia da mesma para a camera.
+inline int PlantGeometryLodLevel(int plantIndex, float distance)
+{
+	int geometryLodIndex = (int)(distance / _PlantsLibrary[plantIndex].geometryCullDistance * BUFFER_SIZE_RAM_VRAM);
+	
+	geometryLodIndex  = min(geometryLodIndex , BUFFER_SIZE_RAM_VRAM - 1);
+	
+	return _PlantsLibrary[plantIndex].discreteLOD[geometryLodIndex];
+}
+
+
+/// Insere a transform da planta, baseado no LOD definido, no Buffer para renderização da sombra. 
+inline void SaveTransformOnShadowLodBuffers(VegetationTransform transform, int plantIndex, float distance)
+{
+	int shadowLODLevel = PlantShadowLodLevel(plantIndex, distance);
+
+	if (shadowLODLevel >= 0 && _PlantsLibrary[plantIndex].enableShadow)
+	{
+		int index = IndexOnLODBufferDescriptor(plantIndex, shadowLODLevel);
+
+		int outputBufferInitialPosition = _LODBufferDescriptor_RW_shadow[index].firstIndexOnLODBuffer;
+		int outputBufferCounter = 0;
+		InterlockedAdd(_LODBufferDescriptor_RW_shadow[index].instancesCounter, 1, outputBufferCounter);
+
+		_PlantsPositionsBufferLODShadow_RW[outputBufferInitialPosition + outputBufferCounter] = transform;
+	}
+}
+
+
+/// Insere a transform da planta, baseado no LOD definido, no Buffer para renderização da geometria. 
+inline void SaveTransformOnGeometryLodBuffers(VegetationTransform transform, int plantIndex, float distance)
+{
+	int geometryLODLevel = PlantGeometryLodLevel(plantIndex, distance);
+	
+	if(geometryLODLevel >= 0 && _PlantsLibrary[plantIndex].enableRender)
+	{
+		int index = IndexOnLODBufferDescriptor(plantIndex, geometryLODLevel);
+
+		int outputBufferInitialPosition = _LODBufferDescriptor_RW[index].firstIndexOnLODBuffer;
+		int outputBufferCounter = 0;
+		InterlockedAdd(_LODBufferDescriptor_RW[index].instancesCounter, 1, outputBufferCounter);
+
+		_PlantsPositionsBufferLODGeometry_RW[outputBufferInitialPosition + outputBufferCounter] = transform;
+	}
+}
+
+
+/// Apos a distribuição somente o Layer é salvo no PositionsBuffer por motivos de armazenamento.
+/// Com isso, todo o processo de analise durante a distribuição é dispensado, mas ainda é necessário
+/// recomputar a posição da planta. Alem disso, é feito a amostragem no Mapa de Altura para posicionar
+/// a planta sobre o terreno e uma amostragem no mapa de Trail, a fim de deformar plantas de pequeno porte.  
+inline VegetationTransform GetTransform(EncapsulatedRequestDataLOD encapsulatedRequestData, int2 id, int layerIndex)
+{
+	float cellSize = encapsulatedRequestData.placementDistance;
+
+	float2 tlCell = id * cellSize + encapsulatedRequestData.boundArea.xy;
+	float2 brCell = tlCell + float2(cellSize, cellSize);
+	float2 centerCell = (brCell + tlCell) * 0.5;
+
+	float2 dummy;
+	float2 recomputedPosition = GetPlantPositionInSpecificLayerWithBounds(centerCell, layerIndex, dummy, dummy);
+
+	VegetationTransform transform;
+
+	transform.position = float3(recomputedPosition.x, 0, recomputedPosition.y);
+	transform.position.y = SampleHeight(transform.position, encapsulatedRequestData.boundArea, encapsulatedRequestData.heightmapAtlasPage);
+	transform.rotation = float3(0,1,0);
+
+	return transform;
+}
+
+
+[numthreads(32, 32, 1)]
+void VegetationComputeLOD(uint3 id : SV_DispatchThreadID)
+{
+	float4 atlasPage = _EncapsulatedRequestDataLOD[id.z].positionAtlasPage;
+	int vegetationLayer = (int)_PlantsPositionsBuffer[id.xy + atlasPage.xy].x;
+
+	if(vegetationLayer < 0 || id.x >= atlasPage.z || id.y >= atlasPage.z)
+	{
+		return;
+	}
+
+	VegetationTransform transform = GetTransform(_EncapsulatedRequestDataLOD[id.z], id.xy, vegetationLayer); 
+
+	int plantIndex = PlantModelIndex(transform.position.xz, vegetationLayer);
+
+	transform.scale = lerp(_PlantsLibrary[plantIndex].minScale, _PlantsLibrary[plantIndex].maxScale, _PlantsPositionsBuffer[id.xy + atlasPage.xy].y);
+
+	float distance = length(transform.position - _WorldSpaceCameraPos);
+
+	//distance < 20 prevent culling for plants near and behind the camera
+	if (distance < 20 || IsInsideFrustum(transform.position, plantIndex))
+	{
+		SaveTransformOnGeometryLodBuffers(transform, plantIndex, distance);
+		SaveTransformOnShadowLodBuffers(transform, plantIndex, distance);
+	}
+}
+
+
+[numthreads(8,1,1)]
+void SetInstancesCounterOnGlobalArgsBuffer (uint3 id : SV_DispatchThreadID)
+{
+	uint count, stride;
+    _GlobalArgsBuffer.GetDimensions(count, stride);
+
+	if(id.x <= count)
+	{
+		int index = IndexOnLODBufferDescriptor(_GlobalArgsBuffer[id.x].plantIndexOnLibrary, _GlobalArgsBuffer[id.x].LODLevel);
+
+		_GlobalArgsBuffer[id.x].argsBuffer[/*instanceCounterOnLODBufferIndex*/1] = (uint)(_LODBufferDescriptor_RW[index].instancesCounter);		
+	}
+}
+
+
+[numthreads(8,1,1)]
+void ResetInstancesCounterOnGlobalArgsBuffer(uint3 id : SV_DispatchThreadID)
+{
+	uint count, stride;
+    _LODBufferDescriptor_RW.GetDimensions(count, stride);
+
+	if(id.x < count)
+	{
+		_LODBufferDescriptor_RW[id.x].instancesCounter = 0;
+	}
+}
+

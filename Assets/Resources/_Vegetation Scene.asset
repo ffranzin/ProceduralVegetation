@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2d81e8ad5a843941b6c40c69a4c852f, type: 3}
+  m_Name: _Vegetation Scene
+  m_EditorClassIdentifier: 
+  VegetationLayers:
+  - {fileID: 11400000, guid: 167da89ea5bd6924c94d317a4ab051d0, type: 2}
+  - {fileID: 11400000, guid: ca46ba0936d1e6d448c0f2fdeff1e0a3, type: 2}
+  - {fileID: 11400000, guid: c7bb7d6fae1fe5341a02182c4f7a2ed5, type: 2}
+  - {fileID: 11400000, guid: e8a64b42f2d8d5246a88820a95540d1a, type: 2}
+  layersLibrary: {fileID: 11400000, guid: 22248a14b1a83804e98b5793a7b1aec2, type: 2}
+  billboardsLibrary: {fileID: 11400000, guid: 522580188d4f69d4f8b5441243dc44a2, type: 2}
+  plantsLibrary: {fileID: 11400000, guid: 78a1720f19677b24d9f45558c47d8cae, type: 2}

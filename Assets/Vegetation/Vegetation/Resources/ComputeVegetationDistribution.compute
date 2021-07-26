@@ -1,0 +1,250 @@
+﻿
+#pragma kernel GeneratePlantsPositions
+#pragma kernel CollectPlantsPosition
+
+#include "UnityCG.cginc"
+#include "VegetationCommonVariables.cginc"
+#include "VegetationCommonFunctions.cginc"
+#include "Assets/Vegetation/HLSLUtilities/NoiseUtils.cginc"
+#include "Assets/Vegetation/Vegetation/Scripts/Libraries/Shaders/LayersLibrary.cginc"
+#include "Assets/Vegetation/Vegetation/Resources/Features.cginc"
+
+
+
+
+struct EncapsulatedRequestDataDistribution
+{
+	int vegetationCover;
+	float placementDistance;
+	float4 rectArea;
+	float4 boundAreaOriginal;
+	float4 positionAtlasPage;
+};
+StructuredBuffer<EncapsulatedRequestDataDistribution> _EncapsulatedRequestDataDistribution;
+
+
+float NoiseScale(float2 wPos, int layerIndex)
+{
+	const VegetationLayerDescriptor adap = _VegetationLayersLibrary[layerIndex];
+
+	float noise = simplexfbm2D(wPos, adap.octaves, adap.frequency, adap.lacunarity, adap.gain, adap.amplitude);
+
+	return noise;
+}
+
+
+float2 NoiseDisplacement(float2 wPos, int seedDisplacement)
+{
+	float2 seed = (float2(11.2733, 3.9478) * seedDisplacement + wPos) % 5000;
+
+	return simplexhash2D(seed);
+}
+
+
+
+float2 GetPlantPositionInSpecificLayerWithBounds(float2 wPos, int layerIndex, out float2 tlCell, out float2 brCell)
+{
+	float cellSize = _VegetationLayersLibrary[layerIndex].placementDistance;
+
+	int2 cellID = int2(wPos / cellSize);
+
+	tlCell = cellID * cellSize;
+	brCell = tlCell + float2(cellSize, cellSize);
+	float2 centerCell = (brCell + tlCell) * 0.5;
+
+	float cellHalfSizeWithBorder = (cellSize * 0.5) - _VegetationLayersLibrary[layerIndex].selfDistance;
+
+	return centerCell + NoiseDisplacement(centerCell, layerIndex) * cellHalfSizeWithBorder;
+}
+
+
+
+//bool EvaluateSubtrativeCurves(float2 wPos, int layerIndex)
+//{
+//	float noiseAdaptability = NoisePlacement(wPos, layerIndex);
+//
+//	float influences[FEATURES_COUNT];
+//
+//	for (int i = 0; i < FEATURES_COUNT; i++)
+//	{
+//		influences[i] = 0;
+//	}
+//
+//	for (int i = 0; i < FEATURES_COUNT; i++)
+//	{
+//		float adaptability = _LinearAdaptabilityCurves[AdaptabilityCurveIndex(layerIndex, i, influences[i])];
+//
+//		if (influences[i] > EPSLON && adaptability > noiseAdaptability)
+//		{
+//			return false;
+//		}
+//	}
+//
+//	return true;
+//}
+
+
+
+
+bool EvaluateAditiveCurves(float2 wPos, int layerIndex)
+{
+	float noiseAdaptability = abs(simplexnoise2D(wPos + float2(16.7935, 7.9733) * (layerIndex + 1)));
+
+	float influences[FEATURES_COUNT];
+	influences[FOREST_INDEX] = ForestZoneInfluence(wPos);
+	influences[GROUND_INDEX] = 1.0 - influences[FOREST_INDEX];
+	influences[MOISTURE_INDEX] = 0.0;
+	influences[PRECIPITATION_INDEX] = 0.0;
+	influences[HEIGHT_INDEX] = 0.0;
+	influences[SLOPE_INDEX] = 0.0;
+
+	for (int i = 0; i < FEATURES_COUNT; i++)
+	{
+		float minRequiredAdaptability = _VegetationLayersLibrary[layerIndex].adaptability[i];
+
+		if (influences[i] * minRequiredAdaptability > noiseAdaptability)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+
+
+///Diversos Layers podem compor uma determinada cobertura vegetal.
+///Este processo visa analisar todos os Layers de uma determinada camada vegetal 
+///a fim de verificar se um unico Layers mostra-se apto a posição em analise. 
+///Espera-se como resultado desse processo:
+///		1. Nenhum Layer de uma determinada cobertura vegetal é apto a posição analisada, sendo retornado valores nulos.
+///		2. Um unico Layer mostra-se apto a posição analisada, e este é retornado.
+///		3. Varios Layer mostram-se apto a posição analisada, sendo um selecionado randomicamente.
+void FindAbleLayerAtPositionForSpecificVegetationCover(float4 cell, int vegetationCover, out float2 position, out int layerIndex)
+{
+	float2 br, tl;
+
+	float2 centerCell = (cell.xy + cell.zw) * 0.5;
+
+	int ableLayersFound = 0;
+	int ableLayersIndex[MAX_LAYER_COUNTER];
+	float2 ableLayersPosition[MAX_LAYER_COUNTER];
+
+	for (int i = 0; i <= _VegetationLayersLibraryCount; i++)
+	{
+		if (_VegetationLayersLibrary[i].vegetationCover != vegetationCover)
+		{
+			continue;
+		}
+
+		float2 position = GetPlantPositionInSpecificLayerWithBounds(centerCell, i, tl, br);
+
+		if (IsPointInsideRect(cell.xy, cell.zw, position) && EvaluateAditiveCurves(position, i) /*&& EvaluateSubtrativeCurves(position, i)*/)
+		{
+			ableLayersIndex[ableLayersFound] = i;
+			ableLayersPosition[ableLayersFound] = position;
+			ableLayersFound++;
+		}
+	}
+
+	if (ableLayersFound > 0)
+	{
+		int randomIndex = CustomRandInt(centerCell, 0, ableLayersFound);
+
+		layerIndex = ableLayersIndex[randomIndex];
+		position = ableLayersPosition[randomIndex];
+	}
+	else
+	{
+		layerIndex = INVALID_LAYER;
+		position = INVALID_POSITION;
+	}
+}
+
+
+/// Verifica todas as camadas vegetais, partindo da primeira, buscando algum layer que se adapte a posição. 
+/// Quando alguma posição se motra apta o processo acaba. 
+void FindHigherVegetationCoverAtPosition(float4 cell, int vegetationCoverLimit, out float2 position, out int layerIndex)
+{
+	for (int i = 0; i <= vegetationCoverLimit; i++)
+	{
+		float2 tmpPosition = INVALID_POSITION;
+		int tmpLayerIndex = INVALID_LAYER;
+
+		FindAbleLayerAtPositionForSpecificVegetationCover(cell, i, /*out*/tmpPosition, /*out*/ tmpLayerIndex);
+
+		if (tmpLayerIndex >= 0)
+		{
+			position = tmpPosition;
+			layerIndex = tmpLayerIndex;
+			return;
+		}
+	}
+
+	position = INVALID_POSITION;
+	layerIndex = INVALID_LAYER;
+}
+
+
+inline bool IsPlantInsideArea(float4 areaRect, float2 plantPosition)
+{
+	float2 areaRectMin = areaRect.xy;
+	float2 areaRectMax = areaRect.zw;
+
+	return IsPointInsideRect(areaRectMin, areaRectMax, plantPosition);
+}
+
+
+[numthreads(16,16,1)]
+void GeneratePlantsPositions(uint3 id : SV_DispatchThreadID)
+{
+	float4 atlasPage = _EncapsulatedRequestDataDistribution[id.z].positionAtlasPage;
+
+	float2 rectMin = _EncapsulatedRequestDataDistribution[id.z].rectArea.xy;
+	float2 rectMax = _EncapsulatedRequestDataDistribution[id.z].rectArea.zw;
+
+	float cellSize = _EncapsulatedRequestDataDistribution[id.z].placementDistance;
+
+	float2 tlCell = id.xy * cellSize + rectMin;
+	float2 brCell = tlCell + float2(cellSize, cellSize);
+	float4 cell = float4(tlCell, brCell);
+
+	float2 position = INVALID_POSITION; 
+	int layerIndex = INVALID_LAYER;
+
+	FindHigherVegetationCoverAtPosition(cell, _EncapsulatedRequestDataDistribution[id.z].vegetationCover, /*out*/position, /*out*/layerIndex);
+
+	float scale = NoiseScale(position, layerIndex);
+
+	//a planta pode estar posicionado fora da bound solicitada pelo cliente. Nesse caso, mesmo que a planta exista, 
+	//ela deve ser invalidada por nao pertencer a Area destino.
+	if(scale > 0.001 && IsPlantInsideArea(_EncapsulatedRequestDataDistribution[id.z].boundAreaOriginal, position))
+	{
+		_PlantsPositionsBuffer_RW[id.xy + atlasPage.xy] = float2(layerIndex, scale);
+	}
+	else
+	{
+		_PlantsPositionsBuffer_RW[id.xy + atlasPage.xy] = float2(INVALID_LAYER, 0);
+	}
+}
+
+
+
+
+[numthreads(8,8,1)]
+void CollectPlantsPosition(uint3 id : SV_DispatchThreadID)
+{
+	float2 tlCell = id.xy * _PlacementDistance  + _AreaMinMax.xy;
+	float2 brCell = tlCell + float2(_PlacementDistance , _PlacementDistance);
+	float4 cell = float4(tlCell, brCell);
+
+	float2 position; int layerIndex;
+	
+	FindHigherVegetationCoverAtPosition(cell, _VegetationCoverLimit, /*out*/position, /*out*/layerIndex);
+
+	if(IsPlantInsideArea(_AreaMinMaxOriginal, position))
+	{
+		_CollectPositionsBuffer.Append(position);
+	}
+}

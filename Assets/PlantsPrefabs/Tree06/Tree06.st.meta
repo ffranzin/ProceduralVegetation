@@ -1,0 +1,108 @@
+fileFormatVersion: 2
+guid: 474dc23f09ab76f45a4680e5b1059c99
+SpeedTreeImporter:
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bark1_diffuseOriginal_LOD0
+    second: {fileID: 2100000, guid: 194d61aabfef49248b8753cd13da5fb2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bark1_diffuseOriginal_LOD1
+    second: {fileID: 2100000, guid: 121f9ea564b439e4b8ecb935102fd60d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bark1_diffuseOriginal_LOD2
+    second: {fileID: 2100000, guid: de1319dd4882cc949ac0e24a44cefa06, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bark35_diffuseOriginal_LOD0
+    second: {fileID: 2100000, guid: 5ee0a0174a3e695469d2aa2cab4fb305, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bark35_diffuseOriginal_LOD1
+    second: {fileID: 2100000, guid: b6863a1db05a70d41b6288a8855efe9e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bark35_diffuseOriginal_LOD2
+    second: {fileID: 2100000, guid: cd33da18fdf66024c8fe299d905ec565, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Tree06_Billboard_LOD3
+    second: {fileID: 2100000, guid: 5333858ef45335147a12d6828dcc4bfa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Tree06_LOD0
+    second: {fileID: 2100000, guid: 96784e2069813144d88722eaa2f56ea0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Tree06_LOD1
+    second: {fileID: 2100000, guid: 9038548eb383099459a85fdadaee1992, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Tree06_LOD2
+    second: {fileID: 2100000, guid: 70b18538eb3b16c458ca48cc698f0c4e, type: 2}
+  serializedVersion: 6
+  mainColor: {r: 1, g: 1, b: 1, a: 1}
+  hueVariation: {r: 1, g: 0.5, b: 0, a: 0.1}
+  alphaTestRef: 0.33
+  bestWindQuality: 3
+  hasBillboard: 1
+  lODSettings:
+  - height: 0.5
+    castShadows: 1
+    receiveShadows: 1
+    useLightProbes: 1
+    reflectionProbeUsage: 1
+    enableBump: 1
+    enableHue: 1
+    enableSubsurface: 1
+    windQuality: 4
+  - height: 0.25
+    castShadows: 1
+    receiveShadows: 1
+    useLightProbes: 1
+    reflectionProbeUsage: 1
+    enableBump: 1
+    enableHue: 1
+    enableSubsurface: 1
+    windQuality: 4
+  - height: 0.125
+    castShadows: 1
+    receiveShadows: 1
+    useLightProbes: 1
+    reflectionProbeUsage: 1
+    enableBump: 1
+    enableHue: 1
+    enableSubsurface: 1
+    windQuality: 4
+  - height: 0.01
+    castShadows: 1
+    receiveShadows: 1
+    useLightProbes: 0
+    reflectionProbeUsage: 0
+    enableBump: 1
+    enableHue: 1
+    enableSubsurface: 1
+    windQuality: 1
+  enableSmoothLODTransition: 1
+  animateCrossFading: 1
+  billboardTransitionCrossFadeWidth: 0.25
+  fadeOutWidth: 0.25
+  scaleFactor: 0.3048
+  materialVersion: 3
+  materialLocation: 1
+  fileIDType: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
