@@ -1,4 +1,4 @@
-# ProceduralVegetation
+# Procedural Vegetation
 
 The goal of this project is to create a procedural vegetation manager for large scenarios.
 > This project is not intended to deal with realistic lighting.
